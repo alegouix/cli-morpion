@@ -20,7 +20,7 @@ int max (int a, int b) {
     return b;
 }
 
-void print_board(int board[9], int cursor_x, int cursor_y) {
+void print_board(int board[9], int cursor_x, int cursor_y, int turn) {
     printf("\e[2J"); /* clear screen */
     printf("\e[0;0H"); /* place cursor in the top left of the screen */
     printf("\e(0"); /* change the character set to draw nice lines */
@@ -51,7 +51,7 @@ void print_board(int board[9], int cursor_x, int cursor_y) {
             if (i == cursor_y && j == cursor_x) {
                 strcat(style, "\e[7m");
             }
-            printf("%s   \e[0mx\e[B\e[4D%s   \e[0mx", style, style, style);
+            printf("%s   \e[0mx\e[B\e[4D%s   \e[0mx", style, style);
             printf("\e[1A");
         }
         if (i != 2) {
@@ -60,8 +60,46 @@ void print_board(int board[9], int cursor_x, int cursor_y) {
     }
     printf("\e[1B\e[0m\nmqqqvqqqvqqqj\n");
 
-    printf("\e[11;0H\e[0m"); /* put cursor out of the board and reset style */
+    printf("\e[11;0H\e[0m");
     printf("\e(B"); /* change character set back */
+    if (turn == -1) {
+        printf("Égalité\n");
+    } else if (turn == -2) {
+        printf("Victoire du joueur \e[94m\e[1mbleu\e[0m !\n");
+    } else if (turn == -3) {
+        printf("Victoire du joueur \e[92m\e[1mvert\e[0m !\n");
+    } else if (turn%2 == 0) {
+        printf("C'est au tour du joueur \e[94m\e[1mbleu\n");
+    } else {
+        printf("C'est au tour du joueur \e[92m\e[1mvert\n");
+    }
+
+    printf("\e[12;0H\e[0m"); /* put cursor out of the board and reset style */
+}
+
+int victoire(int board[9]) {
+    for (int i=0; i<3; i++) {
+        /* check rows */
+        if (board[i*3] != 0 && board[i*3] == board[i*3+1] && board[i*3] == board[i*3+2]) {
+            return board[i*3];
+        }
+
+        /* check columns */
+        if (board[i] != 0 && board[i] == board[i+3] && board[i] == board[i+6]) {
+            return board[i];
+        }
+    }
+    /* check first diagonal */
+    if (board[0] != 0 && board[0] == board[4] && board[0] == board[8]) {
+        return board[0];
+    }
+
+    /* check second diagonal */
+    if (board[2] != 0 && board[2] == board[4] && board[2] == board[6]) {
+        return board[2];
+    }
+
+    return 0;
 }
 
 void reset_input_mode() {
@@ -132,7 +170,7 @@ int main() {
     int input;
     for (int turn=0; turn<9; turn++) {
         do {
-            print_board(board, cursor_x, cursor_y);
+            print_board(board, cursor_x, cursor_y, turn);
             input=get_input();
     
             if (input == -1) {
@@ -156,9 +194,18 @@ int main() {
         } while (input != 5);
 
         board[cursor_x + cursor_y*3] = turn%2 + 1;
+
+        int v = victoire(board);
+        if (v == 1) {
+            print_board(board, -1, -1, -2);
+            return 0;
+        } else if (v == 2) {
+            print_board(board, -1, -1, -3);
+            return 0;
+        }
     }
 
-    print_board(board, -1, -1);
+    print_board(board, -1, -1, -1);
 
     return 0;
 }

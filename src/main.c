@@ -169,6 +169,7 @@ int main() {
     int cursor_x = 1, cursor_y = 1;
     int input;
     for (int turn=0; turn<9; turn++) {
+        int ok = 1;
         do {
             print_board(board, cursor_x, cursor_y, turn);
             input=get_input();
@@ -190,8 +191,11 @@ int main() {
                 case 4:
                     cursor_x = max(cursor_x-1, 0);
                     break;
+                case 5:
+                    ok = board[cursor_x + cursor_y*3];
+                    break;
             }
-        } while (input != 5);
+        } while (ok != 0);
 
         board[cursor_x + cursor_y*3] = turn%2 + 1;
 

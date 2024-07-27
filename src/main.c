@@ -161,6 +161,36 @@ int get_input() {
 int main() {
     set_noncanonical();
 
+    /* check terminal size */
+    printf("\e[999;999H\e[6n");
+    fflush(stdout);
+    char buf[10];
+    memset(buf, 0, 10);
+    sleep(1);
+    read(STDIN_FILENO, buf, 10);
+
+    int rows=0, cols=0;
+    if (buf[0] == '\e' && buf[1] == '[') {
+        int i = 2;
+        while (buf[i] != ';') {
+            rows *= 10;
+            rows += buf[i] - '0';
+            i ++;
+        }
+        i++;
+        while (buf[i] != 'R') {
+            cols *= 10;
+            cols += buf[i] - '0';
+            i ++;
+        }
+    }
+    printf(" rows=%d, cols=%d\n", rows, cols);
+
+    if (rows < 13 || cols < 28) {
+        printf("terminal too small. Min size : 13*28");
+        return 1;
+    }
+
     int board[9];
     for (int i=0; i<9; i++) {
         board[i] = 0;

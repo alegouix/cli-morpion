@@ -3,13 +3,20 @@
 #include <string.h>
 
 void print_board(int board[9], int cursor_x, int cursor_y) {
-    printf("\e[2J");
-    printf("\e[0;0H");
-    printf("\e[0m-------------\n");
+    printf("\e[2J"); /* clear screen */
+    printf("\e[0;0H"); /* place cursor in the top left of the screen */
+    printf("\e(0"); /* change the character set to draw nice lines */
+    /*
+     * | is x
+     * - is q
+     * l, w, k, t, n, u, m, v and j are for corners and intersections
+    */
+
+    printf("\e[0mlqqqwqqqwqqqk\n");
     
     char* style = (char*)malloc(16);
     for (int i=0; i<3; i++) {
-        printf("\e[0m|\n|\n|\e[2A");
+        printf("\e[0mx\nx\nx\e[2A");
         for (int j=0; j<3; j++) {
             memset(style, 0, 16);
             switch (board[i*3 + j]) {
@@ -26,13 +33,17 @@ void print_board(int board[9], int cursor_x, int cursor_y) {
             if (i == cursor_y && j == cursor_x) {
                 strcat(style, "\e[7m");
             }
-            printf("%s   \e[0m|\e[B\e[4D%s   \e[0m|\e[B\e[4D%s   \e[0m|", style, style, style);
-            printf("\e[2A");
+            printf("%s   \e[0mx\e[B\e[4D%s   \e[0mx", style, style, style);
+            printf("\e[1A");
         }
-        printf("\e[2B\e[0m\n-------------\n");
+        if (i != 2) {
+            printf("\e[1B\e[0m\ntqqqnqqqnqqqu\n");
+        }
     }
+    printf("\e[1B\e[0m\nmqqqvqqqvqqqj\n");
 
-    printf("\e[14;0H\e[0m");
+    printf("\e[14;0H\e[0m"); /* put cursor out of the board and reset style */
+    printf("\e(B"); /* change character set back */
 }
 
 int main() {
@@ -42,6 +53,7 @@ int main() {
     }
     
     print_board(board, 2, 0);
+    printf("\e(B");
 
     return 0;
 }

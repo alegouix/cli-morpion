@@ -4,21 +4,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-struct termios original_termios;
-
-int min(int a, int b) {
-    if (a>b) {
-        return b;
-    }
-    return a;
-}
-
-int max (int a, int b) {
-    if (a>b) {
-        return a;
-    }
-    return b;
-}
+#include "utils.h"
 
 void print_board(int board[9], int cursor_x, int cursor_y, int turn) {
     printf("\e[2J"); /* clear screen */
@@ -77,7 +63,7 @@ void print_board(int board[9], int cursor_x, int cursor_y, int turn) {
     printf("\e[12;0H\e[0m"); /* put cursor out of the board and reset style */
 }
 
-int victoire(int board[9]) {
+int win(int board[9]) {
     for (int i=0; i<3; i++) {
         /* check rows */
         if (board[i*3] != 0 && board[i*3] == board[i*3+1] && board[i*3] == board[i*3+2]) {
@@ -102,60 +88,56 @@ int victoire(int board[9]) {
     return 0;
 }
 
-void reset_input_mode() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_termios);
-}
-
-void set_noncanonical() {
-    struct termios tattr;
-
-    if (!isatty(STDIN_FILENO)) {
-        printf("error : stdin is not a tty\n");
-        exit(-1);
+void gameloop() {
+    int board[9];
+    for (int i=0; i<9; i++) {
+        board[i] = 0;
     }
 
-    tcgetattr(STDIN_FILENO, &original_termios);
-    atexit(reset_input_mode);
-
-    tcgetattr(STDIN_FILENO, &tattr);
-    tattr.c_lflag &= ~(ICANON|ECHO);
-    tattr.c_cc[VMIN] = 0;
-    tattr.c_cc[VTIME] = 0;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &tattr);
-}
-
-int get_input() {
-    char buf[3];
-    while (1) {
-        while (read(STDIN_FILENO, buf, 3) == 0);
-        if (buf[0] == 'q') {
-            return -1; /* -1 to quit */
-        } else if (buf[0] == '\n') {
-            return 5;
-        } else if (buf[0] == '\e') {
-            if (buf[1] == '[') {
-                switch (buf[2]) {
-                    case 'A':
-                        return 1;
-                        break;
-                    case 'B':
-                        return 2;
-                        break;
-                    case 'C':
-                        return 3;
-                        break;
-                    case 'D':
-                        return 4;
-                        break;
-                    default:
-                        break;
-                }
+    int cursor_x = 1, cursor_y = 1;
+    int input;
+    for (int turn=0; turn<9; turn++) {
+        int ok = 1;
+        do {
+            print_board(board, cursor_x, cursor_y, turn);
+            input=get_input();
+    
+            if (input == -1) {
+                printf("bye\n");
+                return;
             }
+            switch (input) {
+                case 1:
+                    cursor_y = max(cursor_y-1, 0);
+                    break;
+                case 2:
+                    cursor_y = min(2, cursor_y + 1);
+                    break;
+                case 3:
+                    cursor_x = min(2, cursor_x + 1);
+                    break;
+                case 4:
+                    cursor_x = max(cursor_x-1, 0);
+                    break;
+                case 5:
+                    ok = board[cursor_x + cursor_y*3];
+                    break;
+            }
+        } while (ok != 0);
+
+        board[cursor_x + cursor_y*3] = turn%2 + 1;
+
+        int v = win(board);
+        if (v == 1) {
+            print_board(board, -1, -1, -2);
+            return;
+        } else if (v == 2) {
+            print_board(board, -1, -1, -3);
+            return;
         }
-        memset(buf, 0, 3);
     }
 
-    return 0;
+    print_board(board, -1, -1, -1);
 }
 
 int main() {
@@ -191,55 +173,7 @@ int main() {
         return 1;
     }
 
-    int board[9];
-    for (int i=0; i<9; i++) {
-        board[i] = 0;
-    }
-
-    int cursor_x = 1, cursor_y = 1;
-    int input;
-    for (int turn=0; turn<9; turn++) {
-        int ok = 1;
-        do {
-            print_board(board, cursor_x, cursor_y, turn);
-            input=get_input();
-    
-            if (input == -1) {
-                printf("bye\n");
-                return 0;
-            }
-            switch (input) {
-                case 1:
-                    cursor_y = max(cursor_y-1, 0);
-                    break;
-                case 2:
-                    cursor_y = min(2, cursor_y + 1);
-                    break;
-                case 3:
-                    cursor_x = min(2, cursor_x + 1);
-                    break;
-                case 4:
-                    cursor_x = max(cursor_x-1, 0);
-                    break;
-                case 5:
-                    ok = board[cursor_x + cursor_y*3];
-                    break;
-            }
-        } while (ok != 0);
-
-        board[cursor_x + cursor_y*3] = turn%2 + 1;
-
-        int v = victoire(board);
-        if (v == 1) {
-            print_board(board, -1, -1, -2);
-            return 0;
-        } else if (v == 2) {
-            print_board(board, -1, -1, -3);
-            return 0;
-        }
-    }
-
-    print_board(board, -1, -1, -1);
+    gameloop();
 
     return 0;
 }

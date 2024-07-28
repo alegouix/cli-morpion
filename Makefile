@@ -1,4 +1,4 @@
-PROJNAME=term-display
+PROJNAME=cli-morpion
 SRC=src
 BIN=bin
 CC=gcc

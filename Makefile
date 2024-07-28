@@ -1,7 +1,18 @@
 PROJNAME=term-display
+SRC=src
+BIN=bin
+CC=gcc
+CFLAGS=-Wall -Werror
+LD=
 
-build:
-	gcc src/main.c -o $(PROJNAME)
+build: $(BIN)
+	$(CC) $(CFLAGS) src/main.c -o $(BIN)/$(PROJNAME) $(LD)
+
+$(BIN):
+	mkdir $(BIN)
 
 run: build
-	./$(PROJNAME)
+	./$(BIN)/$(PROJNAME)
+
+clean:
+	rm -rf $(BIN)

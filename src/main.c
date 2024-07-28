@@ -186,7 +186,14 @@ int main() {
         return 1;
     }
 
+    /* enable alternative screen buffer and hide the cursor */
+    printf("\e[?1049h\e[?25l");
+
     gameloop();
+    sleep(1);
+
+    /* disable alternative screen buffer and show the cursor */
+    printf("\e[?1049l\e[?25h");
 
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 #include "utils.h"
 
@@ -156,38 +157,17 @@ void gameloop() {
 int main() {
     set_noncanonical();
 
-    /* check terminal size */
-    printf("\e[999;999H\e[6n");
-    fflush(stdout);
-    char buf[10];
-    memset(buf, 0, 10);
-    sleep(1);
-    read(STDIN_FILENO, buf, 10);
-
-    int rows=0, cols=0;
-    if (buf[0] == '\e' && buf[1] == '[') {
-        int i = 2;
-        while (buf[i] != ';') {
-            rows *= 10;
-            rows += buf[i] - '0';
-            i ++;
-        }
-        i++;
-        while (buf[i] != 'R') {
-            cols *= 10;
-            cols += buf[i] - '0';
-            i ++;
-        }
-    }
-    printf(" rows=%d, cols=%d\n", rows, cols);
-
-    if (rows < 13 || cols < 28) {
-        printf("terminal too small. Min size : 13*28");
-        return 1;
-    }
-
     /* enable alternative screen buffer and hide the cursor */
     printf("\e[?1049h\e[?25l");
+
+    /* check terminal size */
+    struct winsize w;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+
+    if (w.ws_row < 13 || w.ws_col < 28) {
+        printf("terminal too small. Min size : 28*13\n");
+        return 1;
+    }
 
     gameloop();
     sleep(1);

@@ -6,6 +6,14 @@
 
 #include "utils.h"
 
+/*
+ * prints the board to the screen
+ * cursor_x and cursor_y are used to highlight the cursors position and can be outside the board to highlight nothing
+ * if turn is >= 0, it represents the turn number
+ *  if it is -1, it means the game ended in a tie
+ *  -2 means player 1 won
+ *  -3 means player 2 won
+*/
 void print_board(int board[9], int cursor_x, int cursor_y, int turn) {
     printf("\e[2J"); /* clear screen */
     printf("\e[0;0H"); /* place cursor in the top left of the screen */
@@ -63,6 +71,10 @@ void print_board(int board[9], int cursor_x, int cursor_y, int turn) {
     printf("\e[12;0H\e[0m"); /* put cursor out of the board and reset style */
 }
 
+/*
+ * checks if a player won
+ * returns 0 if no player won, the winners number (1 or 2) otherwise
+*/
 int win(int board[9]) {
     for (int i=0; i<3; i++) {
         /* check rows */
@@ -89,6 +101,7 @@ int win(int board[9]) {
 }
 
 void gameloop() {
+    /* initialize board */
     int board[9];
     for (int i=0; i<9; i++) {
         board[i] = 0;
